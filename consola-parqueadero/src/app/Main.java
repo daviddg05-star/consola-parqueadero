@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class Main {
 
-    // 1. Constantes del sistema
+    // Constantes del sistema
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final DateTimeFormatter FORMATO_FECHA_HORA = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -19,11 +19,11 @@ public class Main {
     private static final int HORA_APERTURA = 8;
     private static final int HORA_CIERRE = 22;
 
-    // 2. Arreglos paralelos para las celdas
+    // Arreglos paralelos para las celdas
     private static final String[] tiposVehiculo = new String[CAPACIDAD_TOTAL];
     private static final LocalDateTime[] fechasIngreso = new LocalDateTime[CAPACIDAD_TOTAL];
 
-    // 3. Variables de recaudo acumulado
+    // Variables de recaudo acumulado
     private static double recaudoCarros = 0;
     private static double recaudoMotos = 0;
 
@@ -41,31 +41,74 @@ public class Main {
             mostrarMensaje("5. Salir");
 
             System.out.print("Seleccione una opción (1-5): ");
-            int opcion = Integer.parseInt(SCANNER.nextLine().trim());
+            String entrada = SCANNER.nextLine().trim();
 
-            switch (opcion) {
-                case 1:
-                    // Se implementará en el paso de registro de entrada
-                    break;
-                case 2:
-                    // Se implementará en el paso de registro de salida
-                    break;
-                case 3:
-                    // Se implementará en el paso de reportes
-                    break;
-                case 4:
-                    // Se implementará en el paso de reportes
-                    break;
-                case 5:
-                    salir = true;
-                    mostrarMensaje("\n¡Gracias por utilizar el sistema!");
-                    break;
-                default:
-                    mostrarMensaje("Opción no válida.");
+            if (entrada.equals("1")) {
+                registrarEntrada();
+            } else if (entrada.equals("2")) {
+                // Se implementará en el paso de registro de salida
+            } else if (entrada.equals("3")) {
+                // Se implementará en el paso de reportes
+            } else if (entrada.equals("4")) {
+                // Se implementará en el paso de reportes
+            } else if (entrada.equals("5")) {
+                salir = true;
+                mostrarMensaje("\n¡Gracias por utilizar el sistema!");
+            } else {
+                mostrarMensaje("Opción no válida.");
             }
         }
 
         SCANNER.close();
+    }
+
+    // Método obligatorio: Registro de Entrada
+    private static void registrarEntrada() {
+        mostrarMensaje("\n--- REGISTRO DE INGRESO ---");
+
+        int indiceLibre = buscarCeldaDisponible();
+        if (indiceLibre == -1) {
+            mostrarMensaje("Error: El parqueadero está lleno. No hay celdas disponibles.");
+            return;
+        }
+
+        mostrarMensaje("Tipo de vehículo:");
+        mostrarMensaje("1. Carro");
+        mostrarMensaje("2. Moto");
+        System.out.print("Seleccione el tipo (1-2): ");
+        String opcionTipo = SCANNER.nextLine().trim();
+
+        String tipoVehiculo = opcionTipo.equals("2") ? "Moto" : "Carro";
+        LocalDateTime fechaIngreso = leerFechaHora("Ingrese fecha y hora de ingreso (yyyy-MM-dd HH:mm): ");
+
+        tiposVehiculo[indiceLibre] = tipoVehiculo;
+        fechasIngreso[indiceLibre] = fechaIngreso;
+
+        mostrarMensaje("-> Vehículo registrado con éxito en la Celda " + (indiceLibre + 1));
+    }
+
+    // Método auxiliar para buscar espacio libre
+    private static int buscarCeldaDisponible() {
+        for (int i = 0; i < CAPACIDAD_TOTAL; i++) {
+            if (tiposVehiculo[i] == null) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // Lectura inicial de fecha y hora
+    private static LocalDateTime leerFechaHora(String mensaje) {
+        while (true) {
+            System.out.print(mensaje);
+            String texto = SCANNER.nextLine().trim();
+
+            try {
+                return LocalDateTime.parse(texto, FORMATO_FECHA_HORA);
+            } catch (Exception e) {
+                mostrarMensaje("Error: Formato inválido. Use yyyy-MM-dd HH:mm.");
+            }
+        }
     }
 
     private static void mostrarMensaje(String mensaje) {
