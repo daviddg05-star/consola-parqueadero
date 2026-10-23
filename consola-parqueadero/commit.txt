@@ -1,0 +1,11 @@
+Commit 1, creación de archivos, app y main 
+
+Commit 2, Declaración de constantes, variables y arreglos iniciales
+
+
+Commit 3, Registro de entrada
+
+Commit 4, Celdas disponibles
+
+Commit 5, Validación de datos
+
