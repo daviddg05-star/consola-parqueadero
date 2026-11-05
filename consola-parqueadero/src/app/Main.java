@@ -90,7 +90,6 @@ public class Main {
         mostrarMensaje("-> Vehículo registrado con éxito en la Celda " + (indiceLibre + 1));
     }
 
-    // Método obligatorio: Registro de Salida
     private static void registrarSalida() {
         mostrarMensaje("\n--- REGISTRO DE SALIDA ---");
 
@@ -117,13 +116,12 @@ public class Main {
             }
         }
 
-        // Llamada previa al cálculo de liquidación
+        // Ejecutar liquidación detallada y acumulación de recaudo
         liquidarEstadia(numCelda, tipoVehiculo, fechaIngreso, fechaSalida);
 
-        // Liberar celda en los arreglos paralelos
+        // Liberar celda en los arreglos
         tiposVehiculo[indice] = null;
         fechasIngreso[indice] = null;
-        mostrarMensaje("-> Celda " + numCelda + " liberada con éxito.");
     }
 
     private static int buscarCeldaDisponible() {
@@ -143,10 +141,65 @@ public class Main {
         }
     }
 
-    // Estructura preliminar de Liquidación (se completará con la factura detallada en el Paso 7)
+    // Método obligatorio: Liquidación
     private static void liquidarEstadia(int celda, String tipoVehiculo, LocalDateTime ingreso, LocalDateTime salida) {
-        long dias = ChronoUnit.DAYS.between(ingreso, salida);
-        mostrarMensaje("Procesando salida para el vehículo " + tipoVehiculo + " de la celda " + celda + "...");
+        long diasACobrar = contarDiasCompletos(ingreso, salida);
+        LocalDateTime cursor = ingreso.plusDays(diasACobrar);
+        long horasACobrar = calcularHorasRestantes(cursor, salida);
+
+        // Si supera o alcanza el umbral, cobra un día completo adicional
+        if (horasACobrar >= UMBRAL_HORAS_DIA) {
+            diasACobrar++;
+            horasACobrar = 0;
+        }
+
+        double tarifaDia = tipoVehiculo.equalsIgnoreCase("Carro") ? TARIFA_DIA_CARRO : TARIFA_DIA_MOTO;
+        double tarifaHora = tipoVehiculo.equalsIgnoreCase("Carro") ? TARIFA_HORA_CARRO : TARIFA_HORA_MOTO;
+
+        double subtotalDias = diasACobrar * tarifaDia;
+        double subtotalHoras = horasACobrar * tarifaHora;
+        double totalPagar = subtotalDias + subtotalHoras;
+
+        // Acumular recaudo por tipo
+        if (tipoVehiculo.equalsIgnoreCase("Carro")) {
+            recaudoCarros += totalPagar;
+        } else {
+            recaudoMotos += totalPagar;
+        }
+
+        mostrarFactura(celda, tipoVehiculo, ingreso, salida, diasACobrar, horasACobrar, tarifaDia, tarifaHora, subtotalDias, subtotalHoras, totalPagar);
+    }
+
+    private static long contarDiasCompletos(LocalDateTime ingreso, LocalDateTime salida) {
+        return ChronoUnit.DAYS.between(ingreso, salida);
+    }
+
+    private static long calcularHorasRestantes(LocalDateTime cursor, LocalDateTime salida) {
+        long minutosRestantes = Duration.between(cursor, salida).toMinutes();
+        return (minutosRestantes + 59) / 60;
+    }
+
+    private static void mostrarFactura(int celda, String tipoVehiculo, LocalDateTime ingreso, LocalDateTime salida,
+                                       long dias, long horas, double tarifaDia, double tarifaHora,
+                                       double subtotalDias, double subtotalHoras, double total) {
+        mostrarMensaje("\n============================================");
+        mostrarMensaje("             FACTURA DE SALIDA              ");
+        mostrarMensaje("============================================");
+        mostrarMensaje("Celda Liberada : " + celda);
+        mostrarMensaje("Tipo Vehículo  : " + tipoVehiculo);
+        mostrarMensaje("Fecha Ingreso  : " + ingreso.format(FORMATO_FECHA_HORA));
+        mostrarMensaje("Fecha Salida   : " + salida.format(FORMATO_FECHA_HORA));
+        mostrarMensaje("--------------------------------------------");
+        mostrarMensaje("Desglose:");
+        if (dias > 0) {
+            System.out.printf(" - Días (%d x $%.0f)  : $%.2f%n", dias, tarifaDia, subtotalDias);
+        }
+        if (horas > 0 || dias == 0) {
+            System.out.printf(" - Horas (%d x $%.0f) : $%.2f%n", horas, tarifaHora, subtotalHoras);
+        }
+        mostrarMensaje("--------------------------------------------");
+        System.out.printf("TOTAL A PAGAR  : $%.2f%n", total);
+        mostrarMensaje("============================================\n");
     }
 
     // ==========================================
