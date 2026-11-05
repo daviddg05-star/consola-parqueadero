@@ -1,7 +1,9 @@
 package app;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Scanner;
 
 public class Main {
@@ -47,7 +49,7 @@ public class Main {
                     registrarEntrada();
                     break;
                 case 2:
-                    // Se implementará en el paso de registro de salida
+                    registrarSalida();
                     break;
                 case 3:
                     mostrarEstadoCeldas();
@@ -88,6 +90,42 @@ public class Main {
         mostrarMensaje("-> Vehículo registrado con éxito en la Celda " + (indiceLibre + 1));
     }
 
+    // Método obligatorio: Registro de Salida
+    private static void registrarSalida() {
+        mostrarMensaje("\n--- REGISTRO DE SALIDA ---");
+
+        int numCelda = leerEnteroEnRango("Ingrese el número de celda (1-" + CAPACIDAD_TOTAL + "): ", 1, CAPACIDAD_TOTAL);
+        int indice = numCelda - 1;
+
+        if (tiposVehiculo[indice] == null) {
+            mostrarMensaje("Error: La celda " + numCelda + " se encuentra vacía.");
+            return;
+        }
+
+        LocalDateTime fechaIngreso = fechasIngreso[indice];
+        String tipoVehiculo = tiposVehiculo[indice];
+
+        mostrarMensaje("Celda " + numCelda + " | Vehículo: " + tipoVehiculo + " | Ingreso: " + fechaIngreso.format(FORMATO_FECHA_HORA));
+
+        LocalDateTime fechaSalida;
+        while (true) {
+            fechaSalida = leerFechaHora("Ingrese fecha y hora de salida (yyyy-MM-dd HH:mm): ");
+            if (fechaSalida.isBefore(fechaIngreso)) {
+                mostrarMensaje("Error: La fecha y hora de salida no puede ser anterior a la de ingreso. Reintente.");
+            } else {
+                break;
+            }
+        }
+
+        // Llamada previa al cálculo de liquidación
+        liquidarEstadia(numCelda, tipoVehiculo, fechaIngreso, fechaSalida);
+
+        // Liberar celda en los arreglos paralelos
+        tiposVehiculo[indice] = null;
+        fechasIngreso[indice] = null;
+        mostrarMensaje("-> Celda " + numCelda + " liberada con éxito.");
+    }
+
     private static int buscarCeldaDisponible() {
         for (int i = 0; i < CAPACIDAD_TOTAL; i++) {
             if (tiposVehiculo[i] == null) {
@@ -105,8 +143,14 @@ public class Main {
         }
     }
 
+    // Estructura preliminar de Liquidación (se completará con la factura detallada en el Paso 7)
+    private static void liquidarEstadia(int celda, String tipoVehiculo, LocalDateTime ingreso, LocalDateTime salida) {
+        long dias = ChronoUnit.DAYS.between(ingreso, salida);
+        mostrarMensaje("Procesando salida para el vehículo " + tipoVehiculo + " de la celda " + celda + "...");
+    }
+
     // ==========================================
-    // MÉTODOS OBLIGATORIOS DE VALIDACIÓN DE DATOS
+    // MÉTODOS DE VALIDACIÓN Y APOYO
     // ==========================================
 
     private static LocalDateTime leerFechaHora(String mensaje) {
@@ -123,7 +167,6 @@ public class Main {
                 LocalDateTime fechaParsed = LocalDateTime.parse(texto, FORMATO_FECHA_HORA);
                 String textoFormateado = fechaParsed.format(FORMATO_FECHA_HORA);
 
-                // Comprobación estricta de existencia en el calendario (ej: 30 de febrero)
                 if (!texto.equals(textoFormateado)) {
                     mostrarMensaje("Error: La fecha ingresada no existe en el calendario. Intente nuevamente.");
                     continue;
@@ -174,11 +217,11 @@ public class Main {
             System.out.print(mensaje);
             if (!SCANNER.hasNextInt()) {
                 mostrarMensaje("Error: Ingrese un número entero válido.");
-                SCANNER.nextLine(); // Limpiar entrada
+                SCANNER.nextLine();
                 continue;
             }
             int valor = SCANNER.nextInt();
-            SCANNER.nextLine(); // Consumir salto de línea pendiente
+            SCANNER.nextLine();
 
             if (valor < min || valor > max) {
                 mostrarMensaje("Error: Opción fuera de rango (" + min + " - " + max + ").");
