@@ -38,7 +38,7 @@ public class Main {
             mostrarMensaje("============================================");
             mostrarMensaje("1. Registrar ingreso de vehículo");
             mostrarMensaje("2. Registrar salida y liquidar estadía");
-            mostrarMensaje("3. Reporte de ocupación / Estado de celdas");
+            mostrarMensaje("3. Reporte de ocupación");
             mostrarMensaje("4. Reporte financiero");
             mostrarMensaje("5. Salir");
 
@@ -52,10 +52,10 @@ public class Main {
                     registrarSalida();
                     break;
                 case 3:
-                    mostrarEstadoCeldas();
+                    mostrarReporteOcupacion();
                     break;
                 case 4:
-                    // Se implementará en el paso de reportes
+                    mostrarReporteFinanciero();
                     break;
                 case 5:
                     salir = true;
@@ -66,6 +66,10 @@ public class Main {
 
         SCANNER.close();
     }
+
+    // ==========================================
+    // MÉTODOS OBLIGATORIOS Y LÓGICA PRINCIPAL
+    // ==========================================
 
     private static void registrarEntrada() {
         mostrarMensaje("\n--- REGISTRO DE INGRESO ---");
@@ -116,10 +120,9 @@ public class Main {
             }
         }
 
-        // Ejecutar liquidación detallada y acumulación de recaudo
         liquidarEstadia(numCelda, tipoVehiculo, fechaIngreso, fechaSalida);
 
-        // Liberar celda en los arreglos
+        // Liberar celda
         tiposVehiculo[indice] = null;
         fechasIngreso[indice] = null;
     }
@@ -133,21 +136,11 @@ public class Main {
         return -1;
     }
 
-    private static void mostrarEstadoCeldas() {
-        mostrarMensaje("\n--- ESTADO DE CELDAS DISPONIBLES ---");
-        for (int i = 0; i < CAPACIDAD_TOTAL; i++) {
-            String estado = (tiposVehiculo[i] == null) ? "[ LIBRE ]" : "[ OCUPADA - " + tiposVehiculo[i] + " ]";
-            mostrarMensaje("Celda " + (i + 1) + ": " + estado);
-        }
-    }
-
-    // Método obligatorio: Liquidación
     private static void liquidarEstadia(int celda, String tipoVehiculo, LocalDateTime ingreso, LocalDateTime salida) {
         long diasACobrar = contarDiasCompletos(ingreso, salida);
         LocalDateTime cursor = ingreso.plusDays(diasACobrar);
         long horasACobrar = calcularHorasRestantes(cursor, salida);
 
-        // Si supera o alcanza el umbral, cobra un día completo adicional
         if (horasACobrar >= UMBRAL_HORAS_DIA) {
             diasACobrar++;
             horasACobrar = 0;
@@ -160,7 +153,6 @@ public class Main {
         double subtotalHoras = horasACobrar * tarifaHora;
         double totalPagar = subtotalDias + subtotalHoras;
 
-        // Acumular recaudo por tipo
         if (tipoVehiculo.equalsIgnoreCase("Carro")) {
             recaudoCarros += totalPagar;
         } else {
@@ -170,13 +162,45 @@ public class Main {
         mostrarFactura(celda, tipoVehiculo, ingreso, salida, diasACobrar, horasACobrar, tarifaDia, tarifaHora, subtotalDias, subtotalHoras, totalPagar);
     }
 
-    private static long contarDiasCompletos(LocalDateTime ingreso, LocalDateTime salida) {
-        return ChronoUnit.DAYS.between(ingreso, salida);
+    // Método obligatorio: Reporte de Ocupación
+    private static void mostrarReporteOcupacion() {
+        int ocupadas = 0;
+        for (int i = 0; i < CAPACIDAD_TOTAL; i++) {
+            if (tiposVehiculo[i] != null) {
+                ocupadas++;
+            }
+        }
+        int libres = CAPACIDAD_TOTAL - ocupadas;
+
+        mostrarMensaje("\n============================================");
+        mostrarMensaje("           REPORTE DE OCUPACIÓN             ");
+        mostrarMensaje("============================================");
+        mostrarMensaje("Celdas Ocupadas: " + ocupadas);
+        mostrarMensaje("Celdas Libres  : " + libres);
+        mostrarMensaje("Capacidad Total: " + CAPACIDAD_TOTAL);
+        mostrarMensaje("============================================\n");
     }
 
-    private static long calcularHorasRestantes(LocalDateTime cursor, LocalDateTime salida) {
-        long minutosRestantes = Duration.between(cursor, salida).toMinutes();
-        return (minutosRestantes + 59) / 60;
+    // Método obligatorio: Reporte Financiero
+    private static void mostrarReporteFinanciero() {
+        double totalGeneral = recaudoCarros + recaudoMotos;
+
+        mostrarMensaje("\n============================================");
+        mostrarMensaje("            REPORTE FINANCIERO              ");
+        mostrarMensaje("============================================");
+        System.out.printf("Recaudo Carros : $%.2f%n", recaudoCarros);
+        System.out.printf("Recaudo Motos  : $%.2f%n", recaudoMotos);
+        mostrarMensaje("--------------------------------------------");
+        System.out.printf("TOTAL RECAUDO  : $%.2f%n", totalGeneral);
+        mostrarMensaje("============================================\n");
+    }
+
+    // ==========================================
+    // MÉTODOS DE APOYO Y VALIDACIONES
+    // ==========================================
+
+    private static void mostrarMensaje(String mensaje) {
+        System.out.println(mensaje);
     }
 
     private static void mostrarFactura(int celda, String tipoVehiculo, LocalDateTime ingreso, LocalDateTime salida,
@@ -201,10 +225,6 @@ public class Main {
         System.out.printf("TOTAL A PAGAR  : $%.2f%n", total);
         mostrarMensaje("============================================\n");
     }
-
-    // ==========================================
-    // MÉTODOS DE VALIDACIÓN Y APOYO
-    // ==========================================
 
     private static LocalDateTime leerFechaHora(String mensaje) {
         while (true) {
@@ -284,7 +304,12 @@ public class Main {
         }
     }
 
-    private static void mostrarMensaje(String mensaje) {
-        System.out.println(mensaje);
+    private static long contarDiasCompletos(LocalDateTime ingreso, LocalDateTime salida) {
+        return ChronoUnit.DAYS.between(ingreso, salida);
+    }
+
+    private static long calcularHorasRestantes(LocalDateTime cursor, LocalDateTime salida) {
+        long minutosRestantes = Duration.between(cursor, salida).toMinutes();
+        return (minutosRestantes + 59) / 60;
     }
 }
